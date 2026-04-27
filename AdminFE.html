@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Admin Portal</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        body { background: #0f172a; color: white; }
+        .admin-sidebar { background: #1e293b; border-right: 1px solid #334155; }
+        .admin-topbar { background: #1e293b; border-bottom: 1px solid #334155; color: white; }
+        .admin-topbar h1 { color: white; }
+        .admin-topbar p { color: #94a3b8; }
+        .widget-card { background: #1e293b; border-color: #334155; box-shadow: none;}
+        .widget-header h3 { color: white; }
+        th { background: #334155; color: white; border-bottom: none;}
+        td { color: #cbd5e1; border-color: #334155;}
+        .data-table-wrapper { background: #1e293b; border-color: #334155; }
+        .table-controls h3 { color: white; }
+        .action-btn-sm { padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: 600;}
+        .btn-approve { background: var(--success); color: white; }
+        .btn-reject { background: var(--danger); color: white; margin-left: 5px;}
+        .loan-details { font-size: 13px; color: #94a3b8; margin-top: 5px;}
+    </style>
+</head>
+<body>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <div class="dashboard-wrapper" id="adminDashboard">
+        
+        <aside class="sidebar admin-sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-shield-alt"></i>
+                <h2>Admin Portal</h2>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="#" class="nav-link active" data-target="usersView"><i class="fas fa-users"></i> All Users</a></li>
+                <li><a href="#" class="nav-link" data-target="txView"><i class="fas fa-list"></i> Master Ledger</a></li>
+                <li><a href="#" class="nav-link" data-target="loansView"><i class="fas fa-file-invoice-dollar"></i> Loan Approvals</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar admin-topbar">
+                <div class="welcome-text" style="display: flex; align-items: center; gap: 15px;">
+                    <i class="fas fa-bars hamburger-btn" id="sidebarToggle" style="font-size: 20px; cursor: pointer; color: white;"></i>
+                    <div>
+                        <h1 style="font-size: 18px;">System Overview</h1>
+                        <p style="font-size: 12px;">Manage users, monitor transactions, and approve loans.</p>
+                    </div>
+                </div>
+            </header>
+
+            <div class="dashboard-views">
+                
+                <!-- USERS VIEW -->
+                <section id="usersView" class="view-section active">
+                    <div class="data-table-wrapper">
+                        <div class="table-controls"><h3>Registered Users</h3></div>
+                        <table>
+                            <thead>
+                                <tr><th>Username</th><th>Email</th><th>Phone</th><th>Balance</th></tr>
+                            </thead>
+                            <tbody id="adminUsersBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- MASTER LEDGER VIEW -->
+                <section id="txView" class="view-section">
+                    <div class="data-table-wrapper">
+                        <div class="table-controls"><h3>All System Transactions</h3></div>
+                        <table>
+                            <thead>
+                                <tr><th>Date</th><th>Ref ID</th><th>Sender</th><th>Receiver</th><th>Amount</th><th>Desc</th></tr>
+                            </thead>
+                            <tbody id="adminTxBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- LOANS APPROVAL VIEW -->
+                <section id="loansView" class="view-section">
+                    <div class="data-table-wrapper">
+                        <div class="table-controls"><h3>Pending Loan Applications</h3></div>
+                        <table>
+                            <thead>
+                                <tr><th>Applicant</th><th>Type</th><th>Details</th><th>Amount</th><th>Actions</th></tr>
+                            </thead>
+                            <tbody id="adminLoansBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const navLinks = document.querySelectorAll('.nav-link');
+        const viewSections = document.querySelectorAll('.view-section');
+
+        // Mobile Sidebar Toggle
+        const sidebarToggle = document.getElementById("sidebarToggle");
+        const sidebar = document.querySelector(".sidebar");
+        const sidebarOverlay = document.getElementById("sidebarOverlay");
+        if(sidebarToggle) {
+            sidebarToggle.addEventListener("click", () => {
+                sidebar.classList.add("open");
+                sidebarOverlay.classList.add("open");
+            });
+        }
+        if(sidebarOverlay) {
+            sidebarOverlay.addEventListener("click", () => {
+                sidebar.classList.remove("open");
+                sidebarOverlay.classList.remove("open");
+            });
+        }
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                navLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+                viewSections.forEach(v => v.classList.remove('active'));
+                document.getElementById(link.getAttribute('data-target')).classList.add('active');
+
+                if(sidebar) sidebar.classList.remove("open");
+                if(sidebarOverlay) sidebarOverlay.classList.remove("open");
+            });
+        });
+
+        async function loadAdminData() {
+            try {
+                // Fetch Users
+                const uRes = await fetch("/users/all");
+                const uData = await uRes.json();
+                if(uData.success) {
+                    const tbody = document.getElementById("adminUsersBody");
+                    tbody.innerHTML = "";
+                    uData.data.forEach(u => {
+                        tbody.innerHTML += `<tr>
+                            <td>${u.username}</td>
+                            <td>${u.email || '-'}</td>
+                            <td>${u.phone || '-'}</td>
+                            <td style="color:var(--success)">₹${(u.balance || 0).toLocaleString('en-IN')}</td>
+                        </tr>`;
+                    });
+                }
+
+                // Fetch Transactions
+                const tRes = await fetch("/admin/transactions");
+                const tData = await tRes.json();
+                if(tData.success) {
+                    const tbody = document.getElementById("adminTxBody");
+                    tbody.innerHTML = "";
+                    tData.data.forEach(tx => {
+                        tbody.innerHTML += `<tr>
+                            <td>${new Date(tx.createdAt).toLocaleString()}</td>
+                            <td>${tx.referenceId}</td>
+                            <td>${tx.sender}</td>
+                            <td>${tx.receiver}</td>
+                            <td>₹${(tx.amount || 0).toLocaleString('en-IN')}</td>
+                            <td>${tx.description}</td>
+                        </tr>`;
+                    });
+                }
+
+                // Fetch Pending Loans
+                const lRes = await fetch("/admin/loans");
+                const lData = await lRes.json();
+                if(lData.success) {
+                    const tbody = document.getElementById("adminLoansBody");
+                    tbody.innerHTML = "";
+                    lData.data.forEach(loan => {
+                        const app = loan.applicationData || {};
+                        tbody.innerHTML += `<tr>
+                            <td>${loan.username}</td>
+                            <td>${loan.loanType}</td>
+                            <td>
+                                <div class="loan-details">Income: ₹${app.income || 'N/A'}</div>
+                                <div class="loan-details">Emp: ${app.employmentStatus || 'N/A'}</div>
+                                <div class="loan-details">Purp: ${app.purpose || 'N/A'}</div>
+                            </td>
+                            <td style="color:var(--warning)">₹${(loan.amount || 0).toLocaleString('en-IN')}</td>
+                            <td>
+                                <button class="action-btn-sm btn-approve" onclick="handleLoan('${loan._id}', 'Approved')">Approve</button>
+                                <button class="action-btn-sm btn-reject" onclick="handleLoan('${loan._id}', 'Rejected')">Reject</button>
+                            </td>
+                        </tr>`;
+                    });
+                }
+            } catch(e) { 
+                console.error(e); 
+                alert("Failed to load data! Make sure you are accessing this page via http://localhost:5000/AdminFE.html and NOT double-clicking the file.");
+            }
+        }
+
+        async function handleLoan(id, action) {
+            if(!confirm(`Are you sure you want to ${action} this loan?`)) return;
+            try {
+                const res = await fetch(`/admin/loans/${id}/handle`, {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action })
+                });
+                const data = await res.json();
+                alert(data.message);
+                loadAdminData();
+            } catch(e) { alert("Failed to process loan"); }
+        }
+
+        // Initialize
+        loadAdminData();
+    </script>
+</body>
+</html>

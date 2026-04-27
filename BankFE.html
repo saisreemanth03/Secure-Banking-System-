@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nexus Secure Banking</title>
+
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container"></div>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- ========================= -->
+    <!-- AUTHENTICATION SECTION -->
+    <!-- ========================= -->
+    <div class="bank-wrapper" id="authSection">
+        <div class="auth-container" id="container">
+            <div class="form-container sign-up-container">
+                <form id="signupForm">
+                    <h1>Create Account</h1>
+                    <div class="social-container">
+                        <a href="#" class="social"><i class="fab fa-google"></i></a>
+                        <a href="#" class="social"><i class="fas fa-mobile-alt"></i></a>
+                        <a href="#" class="social"><i class="fas fa-microphone"></i></a>
+                    </div>
+                    <input type="text" id="signupUsername" placeholder="Gmail or 10-digit Mobile" required />
+                    <input type="password" id="signupPassword" placeholder="Strong Password" required />
+                    <input type="text" id="signupVoicePhrase" placeholder="Secret Voice Phrase" required />
+                    <button type="submit" class="btn-grad">Sign Up</button>
+                    <p class="info-text">Secure banking with OTP and Voice verification.</p>
+                </form>
+            </div>
+            <div class="form-container sign-in-container">
+                <form id="loginForm">
+                    <h1>Welcome Back</h1>
+                    <div class="social-container">
+                        <a href="#" class="social"><i class="fab fa-google"></i></a>
+                        <a href="#" class="social"><i class="fas fa-mobile-alt"></i></a>
+                    </div>
+                    <input type="text" id="loginUsername" placeholder="Gmail or Mobile Number" required />
+                    <input type="password" id="loginPassword" placeholder="Password" required />
+                    <a href="#" id="forgotPasswordLink" style="color:var(--primary); font-size:13px; font-weight:500; margin-top:10px; text-decoration:none;">Forgot your password?</a>
+                    <button type="submit" class="btn-grad">Login securely</button>
+                </form>
+            </div>
+            <div class="overlay-container">
+                <div class="overlay">
+                    <div class="overlay-panel overlay-left">
+                        <h1>Already registered?</h1>
+                        <p>Sign in to access your dashboard and manage your finances securely.</p>
+                        <button class="btn-grad btn-ghost" id="signIn">Sign In</button>
+                    </div>
+                    <div class="overlay-panel overlay-right">
+                        <h1>New to Nexus?</h1>
+                        <p>Open your digital bank account in minutes and experience modern banking.</p>
+                        <button class="btn-grad btn-ghost" id="signUp">Create Account</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================= -->
+    <!-- MODALS -->
+    <!-- ========================= -->
+    <div class="modal hidden" id="otpModal">
+        <div class="modal-content">
+            <h2><i class="fas fa-shield-alt" style="color:var(--primary);"></i> Security Verification</h2>
+            <p id="otpMessage">We've sent a 6-digit code to your registered contact.</p>
+            <input type="text" id="otpInput" placeholder="000000" maxlength="6" />
+            <button class="btn-grad" id="verifyOtpBtn" style="width:100%;">Verify Code</button>
+            <button class="close-btn" id="closeOtpModal">Cancel</button>
+        </div>
+    </div>
+
+    <div class="modal hidden" id="voiceModal">
+        <div class="modal-content">
+            <h2><i class="fas fa-microphone" style="color:var(--primary);"></i> Voice Match</h2>
+            <p>Please speak your secret phrase to authenticate your identity.</p>
+            <button class="btn-grad" id="startVoiceBtn" style="width:100%;">🎤 Tap to Speak</button>
+            <p id="voiceStatus" style="margin-top:20px; color:var(--primary); font-weight:600;"></p>
+            <button class="close-btn" id="closeVoiceModal">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Transfer Modal -->
+    <div class="modal hidden" id="transferModal">
+        <div class="modal-content">
+            <h2><i class="fas fa-paper-plane" style="color:var(--primary);"></i> Send Money</h2>
+            <p>Enter recipient details and amount.</p>
+            <input type="text" id="transferReceiver" placeholder="Recipient's Gmail or Mobile" />
+            <input type="number" id="transferAmount" placeholder="Amount (₹)" />
+            <input type="text" id="transferDesc" placeholder="Description (Optional)" style="margin-bottom:20px;" />
+            <button class="btn-grad" id="submitTransferBtn" style="width:100%;">Transfer Funds</button>
+            <button class="close-btn" id="closeTransferModal">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Request Money Modal -->
+    <div class="modal hidden" id="requestMoneyModal">
+        <div class="modal-content">
+            <h2><i class="fas fa-hand-holding-usd" style="color:var(--success);"></i> Request Money</h2>
+            <p>Select a user to request funds from.</p>
+            <select id="requestTargetUser">
+                <option value="">Loading users...</option>
+            </select>
+            <input type="number" id="requestAmount" placeholder="Amount (₹)" />
+            <input type="text" id="requestDesc" placeholder="What is this for?" style="margin-bottom:20px;" />
+            <button class="btn-grad" id="submitRequestBtn" style="width:100%; background:var(--success);">Send Request</button>
+            <button class="close-btn" id="closeRequestModal">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Pay Bill Modal -->
+    <div class="modal hidden" id="payBillModal">
+        <div class="modal-content">
+            <h2><i class="fas fa-file-invoice-dollar" style="color:var(--warning);"></i> Pay Bills</h2>
+            <p>Select a biller and enter the amount.</p>
+            <select id="payBillType" style="margin-bottom: 10px;">
+                <option value="Electricity">Electricity</option>
+                <option value="Water">Water</option>
+                <option value="Internet">Internet / Broadband</option>
+                <option value="DTH">DTH / Cable</option>
+            </select>
+            <input type="text" id="payBillProvider" placeholder="Provider Name / Account No." />
+            <input type="number" id="payBillAmount" placeholder="Amount (₹)" style="margin-bottom:20px;" />
+            <button class="btn-grad" id="submitPayBillBtn" style="width:100%;">Pay Bill</button>
+            <button class="close-btn" id="closePayBillModal">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Recharge Modal -->
+    <div class="modal hidden" id="rechargeModal">
+        <div class="modal-content">
+            <h2><i class="fas fa-mobile-alt" style="color:var(--primary);"></i> Mobile Recharge</h2>
+            <p>Enter mobile number and amount to recharge.</p>
+            <input type="text" id="rechargeNumber" placeholder="10-digit Mobile Number" />
+            <select id="rechargeOperator" style="margin-bottom: 10px;">
+                <option value="Jio">Jio</option>
+                <option value="Airtel">Airtel</option>
+                <option value="Vi">Vi (Vodafone Idea)</option>
+                <option value="BSNL">BSNL</option>
+            </select>
+            <input type="number" id="rechargeAmount" placeholder="Amount (₹)" style="margin-bottom:20px;" />
+            <button class="btn-grad" id="submitRechargeBtn" style="width:100%;">Recharge Now</button>
+            <button class="close-btn" id="closeRechargeModal">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Handle Request Modal (Incoming) -->
+    <div class="modal hidden" id="incomingRequestModal">
+        <div class="modal-content">
+            <h2><i class="fas fa-bell" style="color:var(--warning);"></i> Payment Request</h2>
+            <p id="incomingRequestMsg" style="font-weight: 600; font-size: 16px; color: var(--dark);"></p>
+            <div style="display:flex; gap: 10px; margin-top: 20px;">
+                <button class="btn-grad" id="acceptRequestBtn" style="flex:1; background:var(--success);">Accept & Pay</button>
+                <button class="btn-grad" id="declineRequestBtn" style="flex:1; background:var(--danger);">Decline</button>
+            </div>
+            <button class="close-btn" id="closeIncomingRequestModal">Later</button>
+        </div>
+    </div>
+
+    <!-- Loan Application Modal -->
+    <div class="modal hidden" id="loanModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <h2><i class="fas fa-file-signature" style="color:var(--primary);"></i> Apply: <span id="loanModalType">Loan</span></h2>
+            <p>Please provide details for your application.</p>
+            <div style="text-align: left;">
+                <label style="font-size:12px; color:var(--text-muted); font-weight:600;">Requested Amount (₹)</label>
+                <input type="number" id="loanAmount" placeholder="e.g. 500000" />
+                
+                <label style="font-size:12px; color:var(--text-muted); font-weight:600;">Monthly Income (₹)</label>
+                <input type="number" id="loanIncome" placeholder="e.g. 85000" />
+                
+                <label style="font-size:12px; color:var(--text-muted); font-weight:600;">Employment Status</label>
+                <select id="loanEmployment">
+                    <option value="Salaried">Salaried</option>
+                    <option value="Self-Employed">Self-Employed</option>
+                    <option value="Business Owner">Business Owner</option>
+                </select>
+                
+                <label style="font-size:12px; color:var(--text-muted); font-weight:600;">Purpose of Loan</label>
+                <input type="text" id="loanPurpose" placeholder="e.g. Home Renovation" />
+            </div>
+            
+            <button class="btn-grad" id="submitLoanBtn" style="width:100%;">Submit Application</button>
+            <button class="close-btn" id="closeLoanModal">Cancel</button>
+        </div>
+    </div>
+
+    <!-- ========================= -->
+    <!-- DASHBOARD SECTION -->
+    <!-- ========================= -->
+    <div class="dashboard-wrapper hidden" id="dashboardSection">
+        
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-gem"></i>
+                <h2>NexusBank</h2>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="#" class="nav-link active" data-target="homeView"><i class="fas fa-home"></i> Dashboard</a></li>
+                <li><a href="#" class="nav-link" data-target="historyView"><i class="fas fa-history"></i> History</a></li>
+                <li><a href="#" class="nav-link" data-target="servicesView"><i class="fas fa-briefcase"></i> Bank Services</a></li>
+                <li><a href="#" class="nav-link" data-target="profileView"><i class="fas fa-user-cog"></i> Profile Settings</a></li>
+                <!-- Admin link hidden by default -->
+                <li id="adminNavLi" class="hidden"><a href="AdminFE.html" class="nav-link" style="color:var(--warning);"><i class="fas fa-shield-alt"></i> Admin Portal</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <a href="#" id="logoutBtn" style="color: #cbd5e1; text-decoration: none; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-sign-out-alt"></i> Secure Logout
+                </a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar">
+                <div class="welcome-text" style="display: flex; align-items: center; gap: 15px;">
+                    <i class="fas fa-bars hamburger-btn" id="sidebarToggle" style="font-size: 20px; cursor: pointer; color: var(--dark);"></i>
+                    <div>
+                        <h1 id="topbarGreeting" style="font-size: 18px;">Good Morning, User</h1>
+                        <p style="font-size: 12px;">Here's what's happening with your finances today.</p>
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <div class="notification-bell" onclick="markNotificationsRead()">
+                        <i class="far fa-bell"></i>
+                        <div class="notification-dot" id="notifDot"></div>
+                    </div>
+                    <div class="user-profile">
+                        <div class="user-avatar" id="topbarAvatar">U</div>
+                        <div class="user-info">
+                            <h4 id="topbarName">User</h4>
+                            <span>Premium Member</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="dashboard-views">
+
+                <section id="homeView" class="view-section active">
+                    <div class="home-grid">
+                        <div class="home-main">
+                            <div class="balance-card">
+                                <div class="card-label">Total Available Balance</div>
+                                <div class="card-balance" id="displayBalance">₹ 0.00</div>
+                                <div class="card-details">
+                                    <div>
+                                        <div class="card-label">Account Number</div>
+                                        <div class="acc-num" id="displayAccNum">**** **** 8364</div>
+                                    </div>
+                                    <div class="visa-logo">VISA</div>
+                                </div>
+                            </div>
+                            <div class="quick-actions">
+                                <div class="action-btn-sq" id="openTransferBtn">
+                                    <i class="fas fa-paper-plane" style="color: var(--secondary);"></i>
+                                    <span>Send Money</span>
+                                </div>
+                                <div class="action-btn-sq" id="openRequestBtn">
+                                    <i class="fas fa-hand-holding-usd" style="color: var(--success);"></i>
+                                    <span>Receive</span>
+                                </div>
+                                <div class="action-btn-sq" id="openPayBillBtn">
+                                    <i class="fas fa-file-invoice-dollar" style="color: var(--warning);"></i>
+                                    <span>Pay Bills</span>
+                                </div>
+                                <div class="action-btn-sq" id="openRechargeBtn">
+                                    <i class="fas fa-mobile-alt" style="color: var(--primary);"></i>
+                                    <span>Recharge</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="home-side">
+                            <div class="widget-card">
+                                <div class="widget-header">
+                                    <h3>Recent Activity</h3>
+                                    <a href="#" class="view-all nav-link" onclick="document.querySelector('[data-target=historyView]').click()">View all</a>
+                                </div>
+                                <ul class="tx-list" id="recentTxList"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="historyView" class="view-section">
+                    <div class="data-table-wrapper">
+                        <div class="table-controls">
+                            <h3>Transaction History</h3>
+                            <div><select><option>All Transactions</option></select></div>
+                        </div>
+                        <table>
+                            <thead><tr><th>Date</th><th>Description</th><th>Ref ID</th><th>Amount</th><th>Status</th></tr></thead>
+                            <tbody id="txTableBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="servicesView" class="view-section">
+                    <h2 style="margin-bottom: 25px; color: var(--dark);">Explore Nexus Services</h2>
+                    <div class="services-grid">
+                        <div class="service-card">
+                            <div class="service-icon"><i class="fas fa-home"></i></div>
+                            <h3>Home Loans</h3>
+                            <p>Turn your dream home into reality with flexible loans starting at 8.5% p.a.</p>
+                            <button class="btn-grad loan-btn" data-type="Home Loan" style="padding: 10px 25px; font-size:13px;">Apply Now</button>
+                        </div>
+                        <div class="service-card">
+                            <div class="service-icon"><i class="fas fa-coins"></i></div>
+                            <h3>Gold Loans</h3>
+                            <p>Get instant cash against your gold ornaments with minimal documentation.</p>
+                            <button class="btn-grad loan-btn" data-type="Gold Loan" style="padding: 10px 25px; font-size:13px;">Apply Now</button>
+                        </div>
+                        <div class="service-card">
+                            <div class="service-icon"><i class="far fa-credit-card"></i></div>
+                            <h3>Premium Credit Cards</h3>
+                            <p>Unlock exclusive rewards, airport lounge access, and zero joining fees.</p>
+                            <button class="btn-grad loan-btn" data-type="Credit Card" style="padding: 10px 25px; font-size:13px;">Apply Now</button>
+                        </div>
+                        <div class="service-card">
+                            <div class="service-icon"><i class="fas fa-car"></i></div>
+                            <h3>Auto Loans</h3>
+                            <p>Drive home your dream car today with up to 100% on-road funding.</p>
+                            <button class="btn-grad loan-btn" data-type="Auto Loan" style="padding: 10px 25px; font-size:13px;">Apply Now</button>
+                        </div>
+                        <div class="service-card">
+                            <div class="service-icon"><i class="fas fa-piggy-bank"></i></div>
+                            <h3>Fixed Deposits</h3>
+                            <p>Secure your future with our high-yield Fixed Deposits offering up to 7.2% interest.</p>
+                            <button class="btn-grad loan-btn" data-type="Fixed Deposit" style="padding: 10px 25px; font-size:13px;">Apply Now</button>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="profileView" class="view-section">
+                    <div class="home-grid">
+                        <div class="home-main">
+                            <div class="widget-card">
+                                <div class="widget-header"><h3>Account & Profile Details</h3></div>
+                                <div class="profile-form-grid">
+                                    <div class="form-group"><label>Account Number</label><input type="text" id="accountNumber" readonly /></div>
+                                    <div class="form-group"><label>IFSC Code</label><input type="text" id="ifscCode" readonly /></div>
+                                    <div class="form-group"><label>Branch</label><input type="text" id="branchName" readonly /></div>
+                                    <div class="form-group"><label>Branch Code</label><input type="text" id="branchCode" readonly /></div>
+                                    <div class="form-group"><label>Registered Email</label><input type="text" id="registeredEmail" /></div>
+                                    <div class="form-group"><label>Registered Mobile</label><input type="text" id="registeredPhone" /></div>
+                                </div>
+                                <button class="btn-grad" id="saveProfileBtn" style="margin-top: 25px;">Update Profile Details</button>
+                            </div>
+                        </div>
+                        <div class="home-side">
+                            <div class="widget-card">
+                                <div class="widget-header"><h3>Active Applications</h3></div>
+                                <ul class="tx-list" id="activeLoansList"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                </section>
+
+            </div>
+
+            <!-- AI CHATBOT UI -->
+            <button class="chatbot-toggler" id="chatbotToggler">
+                <i class="fas fa-comment-dots"></i>
+            </button>
+            <div class="chatbot-window" id="chatbotWindow">
+                <header class="chatbot-header">
+                    <h2><i class="fas fa-robot"></i> Nexus AI Assistant</h2>
+                    <button class="close-btn" id="closeChatbot"><i class="fas fa-times"></i></button>
+                </header>
+                <ul class="chatbox" id="chatbox">
+                    <li class="chat incoming">
+                        <div class="chat-icon"><i class="fas fa-robot"></i></div>
+                        <p>Hi there 👋<br>How can I help you today? If you made a mistake with a transfer, just let me know!</p>
+                    </li>
+                </ul>
+                <div class="chat-input-area">
+                    <input type="text" id="chatInput" placeholder="Enter a message..." spellcheck="false" required>
+                    <button id="sendChatBtn"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // =========================
+        // UTILS
+        // =========================
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            let icon = 'fa-info-circle';
+            if(type === 'success') icon = 'fa-check-circle';
+            if(type === 'warning') icon = 'fa-exclamation-triangle';
+            if(type === 'danger') icon = 'fa-times-circle';
+            
+            toast.innerHTML = `<i class="fas ${icon}"></i> <div>${message}</div>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease reverse forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        const isValidGmail = (v) => /^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(v);
+        const isValidMobile = (v) => /^[6-9]\d{9}$/.test(v);
+
+        // =========================
+        // DOM ELEMENTS & NAVIGATION
+        // =========================
+        const container = document.getElementById("container");
+        document.getElementById("signUp").addEventListener("click", () => container.classList.add("right-panel-active"));
+        document.getElementById("signIn").addEventListener("click", () => container.classList.remove("right-panel-active"));
+        
+        const authSection = document.getElementById("authSection");
+        const dashboardSection = document.getElementById("dashboardSection");
+        const navLinks = document.querySelectorAll('.nav-link');
+        const viewSections = document.querySelectorAll('.view-section');
+
+        let currentUsername = "";
+        let currentLoanType = "";
+        let pollInterval = null;
+
+        // Mobile Sidebar Toggle
+        const sidebarToggle = document.getElementById("sidebarToggle");
+        const sidebar = document.getElementById("sidebar");
+        const sidebarOverlay = document.getElementById("sidebarOverlay");
+        if(sidebarToggle) {
+            sidebarToggle.addEventListener("click", () => {
+                sidebar.classList.add("open");
+                sidebarOverlay.classList.add("open");
+            });
+        }
+        if(sidebarOverlay) {
+            sidebarOverlay.addEventListener("click", () => {
+                sidebar.classList.remove("open");
+                sidebarOverlay.classList.remove("open");
+            });
+        }
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                if(link.getAttribute('href') === 'AdminFE.html') return; // let it navigate
+                e.preventDefault();
+                const targetId = link.getAttribute('data-target');
+                navLinks.forEach(l => l.classList.remove('active'));
+                if(link.closest('.sidebar-menu')) link.classList.add('active');
+                viewSections.forEach(view => {
+                    view.classList.remove('active');
+                    if(view.id === targetId) view.classList.add('active');
+                });
+                // Close sidebar on mobile after clicking
+                if(sidebar) sidebar.classList.remove("open");
+                if(sidebarOverlay) sidebarOverlay.classList.remove("open");
+            });
+        });
+
+        // =========================
+        // AUTH
+        // =========================
+        document.getElementById("signupForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const username = document.getElementById("signupUsername").value.trim();
+            const password = document.getElementById("signupPassword").value.trim();
+            const voicePhrase = document.getElementById("signupVoicePhrase").value.trim();
+
+            if (!isValidGmail(username) && !isValidMobile(username)) return showToast("Requires Gmail or 10-digit Mobile.", 'danger');
+            
+            try {
+                const res = await fetch("/signup", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password, voicePhrase })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast("Account created! Please login.", 'success');
+                    document.getElementById("signupForm").reset();
+                    container.classList.remove("right-panel-active");
+                } else showToast(data.message, 'danger');
+            } catch (error) { showToast("Server error.", 'danger'); }
+        });
+
+        document.getElementById("loginForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            currentUsername = document.getElementById("loginUsername").value.trim();
+            const password = document.getElementById("loginPassword").value.trim();
+
+            try {
+                const res = await fetch("/login", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username: currentUsername, password })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById("otpModal").classList.remove("hidden");
+                } else showToast(data.message, 'danger');
+            } catch (error) { showToast("Server error.", 'danger'); }
+        });
+
+        document.getElementById("verifyOtpBtn").addEventListener("click", async () => {
+            const otp = document.getElementById("otpInput").value.trim();
+            try {
+                const res = await fetch("/verify-otp", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username: currentUsername, otp })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById("otpModal").classList.add("hidden");
+                    document.getElementById("voiceModal").classList.remove("hidden");
+                } else showToast(data.message, 'danger');
+            } catch (error) { showToast("OTP error.", 'danger'); }
+        });
+        document.getElementById("closeOtpModal").addEventListener("click", () => document.getElementById("otpModal").classList.add("hidden"));
+
+        const startVoiceBtn = document.getElementById("startVoiceBtn");
+        startVoiceBtn.addEventListener("click", () => {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) return showToast("Speech Recognition not supported. Use Chrome.", 'warning');
+            const recognition = new SpeechRecognition();
+            recognition.lang = "en-US";
+            recognition.start();
+            document.getElementById("voiceStatus").innerText = "Listening...";
+
+            recognition.onresult = async (event) => {
+                const spokenPhrase = event.results[0][0].transcript;
+                document.getElementById("voiceStatus").innerText = "Analyzing...";
+                try {
+                    const res = await fetch("/verify-voice", {
+                        method: "POST", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ username: currentUsername, spokenPhrase })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        document.getElementById("voiceModal").classList.add("hidden");
+                        loadDashboard(currentUsername);
+                    } else {
+                        document.getElementById("voiceStatus").innerText = "Mismatch. Try again.";
+                    }
+                } catch (error) { document.getElementById("voiceStatus").innerText = "Server error."; }
+            };
+        });
+        document.getElementById("closeVoiceModal").addEventListener("click", () => document.getElementById("voiceModal").classList.add("hidden"));
+
+        // =========================
+        // DASHBOARD FETCH
+        // =========================
+        async function loadDashboard(username) {
+            try {
+                const res = await fetch(`/user/${username}`);
+                const data = await res.json();
+
+                if (data.success) {
+                    const user = data.data;
+                    authSection.classList.add("hidden");
+                    dashboardSection.classList.remove("hidden");
+
+                    if(user.isAdmin) document.getElementById("adminNavLi").classList.remove("hidden");
+
+                    const initial = user.username.charAt(0).toUpperCase();
+                    document.getElementById("topbarAvatar").innerText = initial;
+                    
+                    const time = new Date().getHours();
+                    let greeting = "Good Morning";
+                    if(time >= 12 && time < 17) greeting = "Good Afternoon";
+                    if(time >= 17) greeting = "Good Evening";
+                    document.getElementById("topbarGreeting").innerText = `${greeting}, ${initial}`;
+                    document.getElementById("topbarName").innerText = user.username;
+
+                    document.getElementById("displayBalance").innerText = `₹ ${user.balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+                    const accNum = user.accountNumber || "519576578364";
+                    document.getElementById("accountNumber").value = accNum;
+                    document.getElementById("displayAccNum").innerText = "**** **** " + accNum.slice(-4);
+                    
+                    document.getElementById("ifscCode").value = user.ifsc || "SBIN0000456";
+                    document.getElementById("branchName").value = user.branch || "Main Branch";
+                    document.getElementById("branchCode").value = user.branchCode || "4567";
+
+                    if (isValidGmail(user.username)) {
+                        document.getElementById("registeredEmail").value = user.username;
+                        document.getElementById("registeredPhone").value = user.phone || "";
+                    } else {
+                        document.getElementById("registeredPhone").value = user.username;
+                        document.getElementById("registeredEmail").value = user.email || "";
+                    }
+
+                    fetchTransactions();
+                    fetchLoans();
+                    
+                    // Start Polling
+                    if(pollInterval) clearInterval(pollInterval);
+                    pollInterval = setInterval(pollNotifications, 5000);
+                    pollNotifications(); // immediate call
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function fetchTransactions() {
+            try {
+                const res = await fetch(`/transactions/${currentUsername}`);
+                const result = await res.json();
+                if(result.success) {
+                    const txTable = document.getElementById("txTableBody");
+                    const recentList = document.getElementById("recentTxList");
+                    txTable.innerHTML = ""; recentList.innerHTML = "";
+
+                    if(result.data.length === 0) {
+                        recentList.innerHTML = "<li style='text-align:center; padding: 20px; color: var(--text-muted);'>No recent transactions</li>";
+                        txTable.innerHTML = "<tr><td colspan='5' style='text-align:center;'>No transactions found</td></tr>";
+                        return;
+                    }
+
+                    result.data.forEach((tx, i) => {
+                        const isSender = tx.sender === currentUsername;
+                        const sign = isSender ? "-" : "+";
+                        const amountColor = isSender ? "var(--danger)" : "var(--success)";
+                        const iconClass = isSender ? "down" : "up";
+                        const iconHtml = isSender ? "<i class='fas fa-arrow-up'></i>" : "<i class='fas fa-arrow-down'></i>";
+                        const dateStr = new Date(tx.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                        const timeStr = new Date(tx.createdAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+                        txTable.innerHTML += `<tr><td>${dateStr}</td><td>${tx.description} ${isSender ? '(To: ' + tx.receiver + ')' : '(From: ' + tx.sender + ')'}</td><td>${tx.referenceId}</td><td style="color: ${amountColor}; font-weight:500;">${sign} ₹${tx.amount.toLocaleString('en-IN', {minimumFractionDigits:2})}</td><td><span class="status-badge ${tx.status.toLowerCase()}">${tx.status}</span></td></tr>`;
+                        if(i < 4) recentList.innerHTML += `<li class="tx-item"><div class="tx-info"><div class="tx-icon ${iconClass}">${iconHtml}</div><div class="tx-details"><h4>${tx.description}</h4><p>${dateStr}, ${timeStr}</p></div></div><div class="tx-amount" style="color: ${amountColor};">${sign} ₹${tx.amount.toLocaleString('en-IN')}</div></li>`;
+                    });
+                }
+            } catch(e) {}
+        }
+
+        async function fetchLoans() {
+            try {
+                const res = await fetch(`/loans/${currentUsername}`);
+                const result = await res.json();
+                if(result.success) {
+                    const list = document.getElementById("activeLoansList");
+                    list.innerHTML = "";
+                    if(result.data.length === 0) return list.innerHTML = "<li style='text-align:center; padding: 20px; color: var(--text-muted);'>No active applications</li>";
+
+                    result.data.forEach(loan => {
+                        const dateStr = new Date(loan.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+                        let sc = "var(--warning)"; if(loan.status === "Approved") sc = "var(--success)"; if(loan.status === "Rejected") sc = "var(--danger)";
+                        list.innerHTML += `<li class="tx-item"><div class="tx-info"><div class="tx-icon" style="background:#eef2ff; color:var(--primary);"><i class="fas fa-file-contract"></i></div><div class="tx-details"><h4>${loan.loanType}</h4><p>Applied on ${dateStr}</p></div></div><div style="text-align: right;"><div style="font-weight: 600;">₹${loan.amount.toLocaleString('en-IN')}</div><div style="font-size: 12px; font-weight:600; color: ${sc};">${loan.status}</div></div></li>`;
+                    });
+                }
+            } catch(e) {}
+        }
+
+        // =========================
+        // POLLING & NOTIFICATIONS
+        // =========================
+        let currentPendingRequestId = null;
+
+        async function pollNotifications() {
+            try {
+                // Check Notifications Array
+                const nRes = await fetch(`/notifications/${currentUsername}`);
+                const nData = await nRes.json();
+                if(nData.success && nData.data.length > 0) {
+                    document.getElementById("notifDot").classList.add("active");
+                    nData.data.forEach(n => showToast(n.message, n.type));
+                    await fetch(`/notifications/${currentUsername}/read`, {method:'POST'});
+                    // Refresh dashboard data as loans/requests might have updated balance
+                    const userRes = await fetch(`/user/${currentUsername}`);
+                    const userJson = await userRes.json();
+                    if(userJson.success) document.getElementById("displayBalance").innerText = `₹ ${userJson.data.balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+                    fetchTransactions();
+                    fetchLoans();
+                }
+
+                // Check Pending Money Requests
+                if(!currentPendingRequestId && document.getElementById("incomingRequestModal").classList.contains("hidden")) {
+                    const rRes = await fetch(`/money-requests/${currentUsername}`);
+                    const rData = await rRes.json();
+                    if(rData.success && rData.data.length > 0) {
+                        const req = rData.data[0];
+                        currentPendingRequestId = req._id;
+                        document.getElementById("incomingRequestMsg").innerText = `${req.requester} is requesting ₹${req.amount.toLocaleString('en-IN')} for "${req.description}"`;
+                        document.getElementById("incomingRequestModal").classList.remove("hidden");
+                    }
+                }
+            } catch(e) {}
+        }
+
+        function markNotificationsRead() {
+            document.getElementById("notifDot").classList.remove("active");
+            showToast("You have no new notifications.", "info");
+        }
+
+        // Handle Incoming Money Request
+        document.getElementById("acceptRequestBtn").addEventListener("click", () => respondToRequest("Accepted"));
+        document.getElementById("declineRequestBtn").addEventListener("click", () => respondToRequest("Declined"));
+        document.getElementById("closeIncomingRequestModal").addEventListener("click", () => {
+            document.getElementById("incomingRequestModal").classList.add("hidden");
+            currentPendingRequestId = null; // will poll again later
+        });
+
+        async function respondToRequest(action) {
+            try {
+                const res = await fetch("/handle-request", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ requestId: currentPendingRequestId, action })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    showToast(data.message, 'success');
+                    document.getElementById("incomingRequestModal").classList.add("hidden");
+                    currentPendingRequestId = null;
+                    const userRes = await fetch(`/user/${currentUsername}`);
+                    const userJson = await userRes.json();
+                    if(userJson.success) document.getElementById("displayBalance").innerText = `₹ ${userJson.data.balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+                    fetchTransactions();
+                } else showToast(data.message, 'danger');
+            } catch(e) { showToast("Error responding to request.", 'danger'); }
+        }
+
+        // =========================
+        // TRANSFERS & REQUESTS OUTGOING
+        // =========================
+        const transferModal = document.getElementById("transferModal");
+        document.getElementById("openTransferBtn").addEventListener("click", () => transferModal.classList.remove("hidden"));
+        document.getElementById("closeTransferModal").addEventListener("click", () => transferModal.classList.add("hidden"));
+
+        document.getElementById("submitTransferBtn").addEventListener("click", async () => {
+            const receiver = document.getElementById("transferReceiver").value.trim();
+            const amount = document.getElementById("transferAmount").value.trim();
+            const desc = document.getElementById("transferDesc").value.trim();
+            if(!receiver || !amount || amount <= 0) return showToast("Invalid receiver or amount.", 'warning');
+
+            try {
+                const res = await fetch("/transfer", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ senderUsername: currentUsername, receiverIdentifier: receiver, amount, description: desc })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    showToast(data.message, 'success');
+                    transferModal.classList.add("hidden");
+                    document.getElementById("transferReceiver").value = ""; document.getElementById("transferAmount").value = "";
+                    const userRes = await fetch(`/user/${currentUsername}`);
+                    const userJson = await userRes.json();
+                    if(userJson.success) document.getElementById("displayBalance").innerText = `₹ ${userJson.data.balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+                    fetchTransactions();
+                } else showToast(data.message, 'danger');
+            } catch(e) { showToast("Transfer failed.", 'danger'); }
+        });
+
+        // Request Money Outgoing
+        const requestModal = document.getElementById("requestMoneyModal");
+        document.getElementById("openRequestBtn").addEventListener("click", async () => {
+            try {
+                const res = await fetch("/users/all");
+                const data = await res.json();
+                if(data.success) {
+                    const select = document.getElementById("requestTargetUser");
+                    select.innerHTML = '<option value="">Select a user...</option>';
+                    data.data.forEach(u => {
+                        if(u.username !== currentUsername) select.innerHTML += `<option value="${u.username}">${u.username}</option>`;
+                    });
+                    requestModal.classList.remove("hidden");
+                }
+            } catch(e) { showToast("Failed to load users.", 'danger'); }
+        });
+        document.getElementById("closeRequestModal").addEventListener("click", () => requestModal.classList.add("hidden"));
+
+        document.getElementById("submitRequestBtn").addEventListener("click", async () => {
+            const targetUser = document.getElementById("requestTargetUser").value;
+            const amount = document.getElementById("requestAmount").value;
+            const desc = document.getElementById("requestDesc").value;
+            if(!targetUser || !amount || amount <= 0) return showToast("Please select user and valid amount", "warning");
+
+            try {
+                const res = await fetch("/request-money", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ requester: currentUsername, targetUser, amount, description: desc })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    showToast("Request sent successfully!", 'success');
+                    requestModal.classList.add("hidden");
+                    document.getElementById("requestAmount").value = "";
+                } else showToast(data.message, 'danger');
+            } catch(e) { showToast("Failed to send request", 'danger'); }
+        });
+        // =========================
+        // PAY BILLS & RECHARGE
+        // =========================
+        const payBillModal = document.getElementById("payBillModal");
+        document.getElementById("openPayBillBtn").addEventListener("click", () => payBillModal.classList.remove("hidden"));
+        document.getElementById("closePayBillModal").addEventListener("click", () => payBillModal.classList.add("hidden"));
+
+        document.getElementById("submitPayBillBtn").addEventListener("click", async () => {
+            const billType = document.getElementById("payBillType").value;
+            const provider = document.getElementById("payBillProvider").value.trim();
+            const amount = document.getElementById("payBillAmount").value.trim();
+            
+            if(!provider || !amount || amount <= 0) return showToast("Invalid provider or amount.", 'warning');
+
+            try {
+                const res = await fetch("/pay-bill", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username: currentUsername, billType, provider, amount })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    showToast(data.message, 'success');
+                    payBillModal.classList.add("hidden");
+                    document.getElementById("payBillProvider").value = "";
+                    document.getElementById("payBillAmount").value = "";
+                    const userRes = await fetch(`/user/${currentUsername}`);
+                    const userJson = await userRes.json();
+                    if(userJson.success) document.getElementById("displayBalance").innerText = `₹ ${userJson.data.balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+                    fetchTransactions();
+                } else showToast(data.message, 'danger');
+            } catch(e) { showToast("Bill payment failed.", 'danger'); }
+        });
+
+        const rechargeModal = document.getElementById("rechargeModal");
+        document.getElementById("openRechargeBtn").addEventListener("click", () => rechargeModal.classList.remove("hidden"));
+        document.getElementById("closeRechargeModal").addEventListener("click", () => rechargeModal.classList.add("hidden"));
+
+        document.getElementById("submitRechargeBtn").addEventListener("click", async () => {
+            const mobileNumber = document.getElementById("rechargeNumber").value.trim();
+            const operator = document.getElementById("rechargeOperator").value;
+            const amount = document.getElementById("rechargeAmount").value.trim();
+            
+            if(!isValidMobile(mobileNumber)) return showToast("Enter a valid 10-digit mobile number.", 'warning');
+            if(!amount || amount <= 0) return showToast("Invalid amount.", 'warning');
+
+            try {
+                const res = await fetch("/recharge", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username: currentUsername, mobileNumber, operator, amount })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    showToast(data.message, 'success');
+                    rechargeModal.classList.add("hidden");
+                    document.getElementById("rechargeNumber").value = "";
+                    document.getElementById("rechargeAmount").value = "";
+                    const userRes = await fetch(`/user/${currentUsername}`);
+                    const userJson = await userRes.json();
+                    if(userJson.success) document.getElementById("displayBalance").innerText = `₹ ${userJson.data.balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+                    fetchTransactions();
+                } else showToast(data.message, 'danger');
+            } catch(e) { showToast("Recharge failed.", 'danger'); }
+        });
+
+        // =========================
+        // LOAN LOGIC (ADVANCED FORM)
+        // =========================
+        const loanModal = document.getElementById("loanModal");
+        document.querySelectorAll('.loan-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                currentLoanType = e.target.getAttribute('data-type');
+                document.getElementById('loanModalType').innerText = currentLoanType;
+                loanModal.classList.remove('hidden');
+            });
+        });
+        document.getElementById("closeLoanModal").addEventListener("click", () => loanModal.classList.add("hidden"));
+
+        document.getElementById("submitLoanBtn").addEventListener("click", async () => {
+            const amount = document.getElementById("loanAmount").value.trim();
+            const income = document.getElementById("loanIncome").value.trim();
+            const employmentStatus = document.getElementById("loanEmployment").value;
+            const purpose = document.getElementById("loanPurpose").value.trim();
+
+            if(!amount || !income || !purpose) return showToast("Please fill all loan fields.", 'warning');
+
+            try {
+                const res = await fetch("/apply-loan", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username: currentUsername, loanType: currentLoanType, amount, income, employmentStatus, purpose })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    showToast("Application submitted! Admin will review.", 'success');
+                    loanModal.classList.add("hidden");
+                    document.getElementById("loanAmount").value = ""; document.getElementById("loanIncome").value = ""; document.getElementById("loanPurpose").value = "";
+                    fetchLoans(); 
+                } else showToast(data.message, 'danger');
+            } catch(e) { showToast("Application failed.", 'danger'); }
+        });
+
+        // =========================
+        // SAVE PROFILE
+        // =========================
+        document.getElementById("saveProfileBtn").addEventListener("click", async () => {
+            const email = document.getElementById("registeredEmail").value;
+            const phone = document.getElementById("registeredPhone").value;
+            try {
+                const res = await fetch(`http://localhost:5000/update/${currentUsername}`, {
+                    method: "PUT", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, phone })
+                });
+                const data = await res.json();
+                if (data.success) showToast("Profile updated!", 'success');
+                else showToast(data.message, 'danger');
+            } catch (error) { showToast("Server error.", 'danger'); }
+        });
+
+        // LOGOUT
+        document.getElementById("logoutBtn").addEventListener("click", (e) => {
+            e.preventDefault();
+            if(pollInterval) clearInterval(pollInterval);
+            currentUsername = ""; currentPendingRequestId = null;
+            dashboardSection.classList.add("hidden");
+            authSection.classList.remove("hidden");
+            document.getElementById("adminNavLi").classList.add("hidden");
+            document.getElementById("loginForm").reset();
+            navLinks.forEach(l => l.classList.remove('active'));
+            navLinks[0].classList.add('active');
+            viewSections.forEach(v => v.classList.remove('active'));
+            document.getElementById('homeView').classList.add('active');
+        });
+
+        // =========================
+        // AI BOT LOGIC
+        // =========================
+        const chatbotToggler = document.getElementById("chatbotToggler");
+        const closeChatbot = document.getElementById("closeChatbot");
+        const chatInput = document.getElementById("chatInput");
+        const sendChatBtn = document.getElementById("sendChatBtn");
+        const chatbox = document.getElementById("chatbox");
+
+        chatbotToggler.addEventListener("click", () => document.body.classList.toggle("show-chatbot"));
+        closeChatbot.addEventListener("click", () => document.body.classList.remove("show-chatbot"));
+
+        const createChatLi = (message, className) => {
+            const chatLi = document.createElement("li");
+            chatLi.classList.add("chat", className);
+            let chatContent = className === "outgoing" ? `<p></p>` : `<div class="chat-icon"><i class="fas fa-robot"></i></div><p></p>`;
+            chatLi.innerHTML = chatContent;
+            chatLi.querySelector("p").textContent = message;
+            return chatLi;
+        }
+
+        const generateBotResponse = async (userMessage, incomingChatLi) => {
+            const messageElement = incomingChatLi.querySelector("p");
+            try {
+                const response = await fetch("/api/bot-chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username: currentUsername, message: userMessage })
+                });
+                const data = await response.json();
+                messageElement.textContent = data.reply;
+                
+                if(data.reversed) {
+                    fetchUserData(currentUsername); // Refresh balances/history
+                }
+            } catch(error) {
+                messageElement.textContent = "Oops! Something went wrong. Please try again.";
+            } finally {
+                chatbox.scrollTo(0, chatbox.scrollHeight);
+            }
+        }
+
+        const handleChat = () => {
+            const userMessage = chatInput.value.trim();
+            if(!userMessage) return;
+
+            chatInput.value = "";
+            
+            // Append user message
+            chatbox.appendChild(createChatLi(userMessage, "outgoing"));
+            chatbox.scrollTo(0, chatbox.scrollHeight);
+
+            setTimeout(() => {
+                const incomingChatLi = document.createElement("li");
+                incomingChatLi.classList.add("chat", "incoming");
+                incomingChatLi.innerHTML = `<div class="chat-icon"><i class="fas fa-robot"></i></div><div class="typing-indicator"><span></span><span></span><span></span></div>`;
+                chatbox.appendChild(incomingChatLi);
+                chatbox.scrollTo(0, chatbox.scrollHeight);
+
+                setTimeout(() => {
+                    incomingChatLi.innerHTML = `<div class="chat-icon"><i class="fas fa-robot"></i></div><p></p>`;
+                    generateBotResponse(userMessage, incomingChatLi);
+                }, 1000); // 1s mock typing delay
+            }, 600);
+        }
+
+        sendChatBtn.addEventListener("click", handleChat);
+        chatInput.addEventListener("keydown", (e) => {
+            if(e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleChat();
+            }
+        });
+
+    </script>
+</body>
+</html>
