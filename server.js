@@ -862,7 +862,7 @@ app.post("/apply-loan", async (req, res) => {
         username = normalizeUsername(username);
         amount = Number(amount);
 
-        if (!username || !loanType || !amount || amount <= 0) {
+        if (!username || !loanType || (loanType !== "Credit Card" && (!amount || amount <= 0))) {
             return res.json({ success: false, message: "Invalid loan details" });
         }
 
@@ -1056,4 +1056,4 @@ app.post("/admin/loans/:id/handle", async (req, res) => {
     } catch (error) { return res.json({ success: false }); }
 });
 
-
+
