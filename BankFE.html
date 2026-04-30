@@ -193,6 +193,51 @@
         </div>
     </div>
 
+    <!-- Credit Card Application Modal -->
+    <div class="modal hidden" id="ccModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <h2><i class="far fa-credit-card" style="color:var(--primary);"></i> Apply: Credit Card</h2>
+            <p>Please provide details for your credit card application.</p>
+            <div style="text-align: left;">
+                <label style="font-size:12px; color:var(--text-muted); font-weight:600;">Monthly Income (₹)</label>
+                <input type="number" id="ccIncome" placeholder="e.g. 85000" />
+                
+                <label style="font-size:12px; color:var(--text-muted); font-weight:600;">Employment Status</label>
+                <select id="ccEmployment">
+                    <option value="Salaried">Salaried</option>
+                    <option value="Self-Employed">Self-Employed</option>
+                    <option value="Business Owner">Business Owner</option>
+                </select>
+            </div>
+            
+            <button class="btn-grad" id="submitCcBtn" style="width:100%;">Submit Application</button>
+            <button class="close-btn" id="closeCcModal">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Fixed Deposit Application Modal -->
+    <div class="modal hidden" id="fdModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <h2><i class="fas fa-piggy-bank" style="color:var(--primary);"></i> Apply: Fixed Deposit</h2>
+            <p>Please provide details for your Fixed Deposit.</p>
+            <div style="text-align: left;">
+                <label style="font-size:12px; color:var(--text-muted); font-weight:600;">Deposit Amount (₹)</label>
+                <input type="number" id="fdAmount" placeholder="e.g. 100000" />
+                
+                <label style="font-size:12px; color:var(--text-muted); font-weight:600;">Tenure</label>
+                <select id="fdTenure">
+                    <option value="1 Year">1 Year (6.5% p.a.)</option>
+                    <option value="2 Years">2 Years (6.8% p.a.)</option>
+                    <option value="3 Years">3 Years (7.0% p.a.)</option>
+                    <option value="5 Years">5 Years (7.2% p.a.)</option>
+                </select>
+            </div>
+            
+            <button class="btn-grad" id="submitFdBtn" style="width:100%;">Submit Application</button>
+            <button class="close-btn" id="closeFdModal">Cancel</button>
+        </div>
+    </div>
+
     <!-- ========================= -->
     <!-- DASHBOARD SECTION -->
     <!-- ========================= -->
@@ -322,7 +367,7 @@
                             <div class="service-icon"><i class="far fa-credit-card"></i></div>
                             <h3>Premium Credit Cards</h3>
                             <p>Unlock exclusive rewards, airport lounge access, and zero joining fees.</p>
-                            <button class="btn-grad loan-btn" data-type="Credit Card" style="padding: 10px 25px; font-size:13px;">Apply Now</button>
+                            <button class="btn-grad cc-btn" data-type="Credit Card" style="padding: 10px 25px; font-size:13px;">Apply Now</button>
                         </div>
                         <div class="service-card">
                             <div class="service-icon"><i class="fas fa-car"></i></div>
@@ -334,7 +379,7 @@
                             <div class="service-icon"><i class="fas fa-piggy-bank"></i></div>
                             <h3>Fixed Deposits</h3>
                             <p>Secure your future with our high-yield Fixed Deposits offering up to 7.2% interest.</p>
-                            <button class="btn-grad loan-btn" data-type="Fixed Deposit" style="padding: 10px 25px; font-size:13px;">Apply Now</button>
+                            <button class="btn-grad fd-btn" data-type="Fixed Deposit" style="padding: 10px 25px; font-size:13px;">Apply Now</button>
                         </div>
                     </div>
                 </section>
@@ -885,6 +930,84 @@
                     showToast("Application submitted! Admin will review.", 'success');
                     loanModal.classList.add("hidden");
                     document.getElementById("loanAmount").value = ""; document.getElementById("loanIncome").value = ""; document.getElementById("loanPurpose").value = "";
+                    fetchLoans(); 
+                } else showToast(data.message, 'danger');
+            } catch(e) { showToast("Application failed.", 'danger'); }
+        });
+
+        // =========================
+        // CREDIT CARD LOGIC
+        // =========================
+        const ccModal = document.getElementById("ccModal");
+        document.querySelectorAll('.cc-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                ccModal.classList.remove('hidden');
+            });
+        });
+        document.getElementById("closeCcModal").addEventListener("click", () => ccModal.classList.add("hidden"));
+
+        document.getElementById("submitCcBtn").addEventListener("click", async () => {
+            const income = document.getElementById("ccIncome").value.trim();
+            const employmentStatus = document.getElementById("ccEmployment").value;
+
+            if(!income) return showToast("Please fill all fields.", 'warning');
+
+            try {
+                const res = await fetch("/apply-loan", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                        username: currentUsername, 
+                        loanType: "Credit Card", 
+                        amount: 0, 
+                        income, 
+                        employmentStatus, 
+                        purpose: "Credit Card Application" 
+                    })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    showToast("Credit Card Application submitted! Admin will review.", 'success');
+                    ccModal.classList.add("hidden");
+                    document.getElementById("ccIncome").value = "";
+                    fetchLoans(); 
+                } else showToast(data.message, 'danger');
+            } catch(e) { showToast("Application failed.", 'danger'); }
+        });
+
+        // =========================
+        // FIXED DEPOSIT LOGIC
+        // =========================
+        const fdModal = document.getElementById("fdModal");
+        document.querySelectorAll('.fd-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                fdModal.classList.remove('hidden');
+            });
+        });
+        document.getElementById("closeFdModal").addEventListener("click", () => fdModal.classList.add("hidden"));
+
+        document.getElementById("submitFdBtn").addEventListener("click", async () => {
+            const amount = document.getElementById("fdAmount").value.trim();
+            const tenure = document.getElementById("fdTenure").value;
+
+            if(!amount || amount <= 0) return showToast("Please enter a valid deposit amount.", 'warning');
+
+            try {
+                const res = await fetch("/apply-loan", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                        username: currentUsername, 
+                        loanType: "Fixed Deposit", 
+                        amount: amount, 
+                        income: "N/A", 
+                        employmentStatus: "N/A", 
+                        purpose: `Fixed Deposit - Tenure: ${tenure}` 
+                    })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    showToast("Fixed Deposit submitted! Admin will review.", 'success');
+                    fdModal.classList.add("hidden");
+                    document.getElementById("fdAmount").value = "";
                     fetchLoans(); 
                 } else showToast(data.message, 'danger');
             } catch(e) { showToast("Application failed.", 'danger'); }
